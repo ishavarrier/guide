@@ -22,55 +22,88 @@ export function LocationAutocomplete({
   onChange, 
   ...props 
 }: LocationAutocompleteProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const initAutocomplete = () => {
+      console.log('Initializing autocomplete...');
       if (window.google && window.google.maps && window.google.maps.places && inputRef.current) {
-        autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
-          types: ['address'],
-          fields: ['formatted_address', 'geometry']
-        });
+        try {
+          console.log('Creating Places Autocomplete for input:', inputRef.current);
+          
+          const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+            types: ['address'],
+            fields: ['formatted_address', 'geometry', 'place_id', 'name']
+          });
 
-        autocompleteRef.current.addListener('place_changed', () => {
-          const place = autocompleteRef.current.getPlace();
-          if (place.formatted_address) {
-            onChange(place.formatted_address);
-          }
+          console.log('Autocomplete object created:', autocomplete);
+
+          autocomplete.addListener('place_changed', () => {
+            console.log('Place changed event fired');
+            const place = autocomplete.getPlace();
+            console.log('Selected place data:', place);
+            
+            if (place && place.formatted_address) {
+              console.log('Setting address:', place.formatted_address);
+              onChange(place.formatted_address);
+            } else if (place && place.name) {
+              console.log('Using place name:', place.name);
+              onChange(place.name);
+            }
+          });
+
+          setIsLoaded(true);
+          console.log('Autocomplete setup complete');
+        } catch (error) {
+          console.error('Error setting up autocomplete:', error);
+        }
+      } else {
+        console.log('Google Maps components check:', {
+          google: !!window.google,
+          maps: !!(window.google && window.google.maps),
+          places: !!(window.google && window.google.maps && window.google.maps.places),
+          input: !!inputRef.current
         });
-        setIsLoaded(true);
       }
     };
 
     // Load Google Maps script with API key
     const loadGoogleMaps = () => {
-      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || import.meta.env.GOOGLE_MAPS_API_KEY;
+      const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      console.log('API Key available:', !!apiKey);
+      
       if (!apiKey) {
-        console.warn('Google Maps API key not found');
+        console.error('Google Maps API key not found in environment variables');
         return;
       }
 
       if (window.google) {
+        console.log('Google Maps already loaded, initializing autocomplete');
         initAutocomplete();
         return;
       }
 
+      console.log('Loading Google Maps script...');
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
       script.async = true;
       script.defer = true;
-      script.onload = initAutocomplete;
+      script.onload = () => {
+        console.log('Google Maps script loaded successfully');
+        initAutocomplete();
+      };
+      script.onerror = () => {
+        console.error('Failed to load Google Maps script');
+      };
       document.head.appendChild(script);
     };
 
     loadGoogleMaps();
 
     return () => {
-      if (autocompleteRef.current) {
-        window.google?.maps?.event?.clearInstanceListeners(autocompleteRef.current);
-      }
+      // Cleanup
     };
   }, [onChange]);
 
@@ -79,7 +112,7 @@ export function LocationAutocomplete({
   };
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <input
         ref={inputRef}
         type="text"
