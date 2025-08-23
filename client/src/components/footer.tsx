@@ -10,7 +10,7 @@ export default function Footer() {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <MapPin className="text-white text-sm" size={16} />
               </div>
-              <h3 className="text-lg font-semibold text-secondary">MidPoint Finder</h3>
+              <h3 className="text-lg font-semibold text-secondary">MID</h3>
             </div>
             <p className="text-gray-600">
               Find the perfect meeting spot between any two locations.
@@ -52,7 +52,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-gray-200 mt-8 pt-6 text-center text-gray-500">
-          <p>&copy; 2024 MidPoint Finder. All rights reserved.</p>
+          <p>&copy; 2024 MID. All rights reserved.</p>
         </div>
       </div>
     </footer>

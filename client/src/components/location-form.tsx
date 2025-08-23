@@ -5,7 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { Search, Coffee, Utensils, Trees, Fuel, ShoppingCart, Film } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { FloatingInput } from "@/components/ui/floating-input";
+import { LocationAutocomplete } from "@/components/location-autocomplete";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { locationSchema, type LocationRequest, type MidpointResponse, PLACE_TYPES, type PlaceType } from "@shared/schema";
@@ -93,10 +93,11 @@ export default function LocationForm({ onSearch, onResults }: LocationFormProps)
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <FloatingInput
+                    <LocationAutocomplete
                       label="First Location"
                       data-testid="input-location1"
-                      {...field}
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
@@ -110,10 +111,11 @@ export default function LocationForm({ onSearch, onResults }: LocationFormProps)
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <FloatingInput
+                    <LocationAutocomplete
                       label="Second Location"
                       data-testid="input-location2"
-                      {...field}
+                      value={field.value}
+                      onChange={field.onChange}
                     />
                   </FormControl>
                   <FormMessage />
