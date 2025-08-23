@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { LocationAutocomplete } from "@/components/location-autocomplete";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { locationSchema, type LocationRequest, type MidpointResponse, PLACE_TYPES, type PlaceType } from "@shared/schema";
+import { locationSchema, type LocationRequest, type CoordinatesRequest, type MidpointResponse, PLACE_TYPES, type PlaceType, type Coordinates } from "@shared/schema";
 
 const FILTER_ICONS = {
   cafe: Coffee,
@@ -39,8 +39,42 @@ export default function LocationForm({ onSearch, onResults }: LocationFormProps)
 
   const searchMutation = useMutation({
     mutationFn: async (data: LocationRequest) => {
-      const response = await apiRequest("POST", "/api/midpoint", data);
-      return response.json() as Promise<MidpointResponse>;
+      // Geocode addresses on frontend first
+      const geocodePromises = [data.location1, data.location2].map(async (address) => {
+        return new Promise<Coordinates>((resolve, reject) => {
+          if (!window.google || !window.google.maps || !window.google.maps.Geocoder) {
+            reject(new Error('Google Maps not loaded'));
+            return;
+          }
+          
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode({ address }, (results: any, status: any) => {
+            if (status === 'OK' && results?.[0]?.geometry?.location) {
+              const location = results[0].geometry.location;
+              resolve({
+                lat: typeof location.lat === 'function' ? location.lat() : location.lat,
+                lng: typeof location.lng === 'function' ? location.lng() : location.lng
+              });
+            } else {
+              reject(new Error(`Could not find location: ${address}`));
+            }
+          });
+        });
+      });
+
+      try {
+        const [coord1, coord2] = await Promise.all(geocodePromises);
+        const coordinatesData: CoordinatesRequest = {
+          coord1,
+          coord2,
+          filters: data.filters
+        };
+        
+        const response = await apiRequest("POST", "/api/midpoint", coordinatesData);
+        return response.json() as Promise<MidpointResponse>;
+      } catch (error) {
+        throw error;
+      }
     },
     onSuccess: (data) => {
       onResults(data);

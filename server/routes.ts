@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { locationSchema, type LocationRequest, type MidpointResponse, type Coordinates, type Place } from "@shared/schema";
+import { locationSchema, coordinatesRequestSchema, type LocationRequest, type CoordinatesRequest, type MidpointResponse, type Coordinates, type Place } from "@shared/schema";
 
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -131,22 +131,21 @@ async function searchPlaces(coordinates: Coordinates, types: string[]): Promise<
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Find midpoint and places
+  // Find midpoint and places using coordinates (to avoid API key restrictions)
   app.post("/api/midpoint", async (req, res) => {
     try {
-      const validatedData = locationSchema.parse(req.body);
+      const validatedData = coordinatesRequestSchema.parse(req.body);
       
-      // Geocode both locations
-      const [coord1, coord2] = await Promise.all([
-        geocodeAddress(validatedData.location1),
-        geocodeAddress(validatedData.location2)
-      ]);
+      // Calculate midpoint from provided coordinates
+      const midpoint = calculateMidpoint(validatedData.coord1, validatedData.coord2);
 
-      // Calculate midpoint
-      const midpoint = calculateMidpoint(coord1, coord2);
-
-      // Get midpoint address
-      const midpointAddress = await reverseGeocode(midpoint);
+      // Get midpoint address (this may fail due to API restrictions, so we'll make it optional)
+      let midpointAddress = `${midpoint.lat.toFixed(4)}°, ${midpoint.lng.toFixed(4)}°`;
+      try {
+        midpointAddress = await reverseGeocode(midpoint);
+      } catch (error) {
+        console.warn("Reverse geocoding failed, using coordinates:", error);
+      }
 
       // Search for places near midpoint
       const places = await searchPlaces(midpoint, validatedData.filters);

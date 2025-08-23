@@ -1,14 +1,20 @@
 import { z } from "zod";
 
+export const coordinatesSchema = z.object({
+  lat: z.number(),
+  lng: z.number()
+});
+
 export const locationSchema = z.object({
   location1: z.string().min(1, "First location is required"),
   location2: z.string().min(1, "Second location is required"),
   filters: z.array(z.string()).default([])
 });
 
-export const coordinatesSchema = z.object({
-  lat: z.number(),
-  lng: z.number()
+export const coordinatesRequestSchema = z.object({
+  coord1: coordinatesSchema,
+  coord2: coordinatesSchema,
+  filters: z.array(z.string()).default([])
 });
 
 export const placeSchema = z.object({
@@ -28,6 +34,7 @@ export const midpointResponseSchema = z.object({
 });
 
 export type LocationRequest = z.infer<typeof locationSchema>;
+export type CoordinatesRequest = z.infer<typeof coordinatesRequestSchema>;
 export type Coordinates = z.infer<typeof coordinatesSchema>;
 export type Place = z.infer<typeof placeSchema>;
 export type MidpointResponse = z.infer<typeof midpointResponseSchema>;

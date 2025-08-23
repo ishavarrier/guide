@@ -87,13 +87,20 @@ export function LocationAutocomplete({
 
       console.log('Loading Google Maps script...');
       const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
       script.async = true;
       script.defer = true;
-      script.onload = () => {
-        console.log('Google Maps script loaded successfully');
-        initAutocomplete();
+      
+      // Set up global callback
+      (window as any).initGoogleMaps = () => {
+        console.log('Google Maps callback triggered');
+        setTimeout(() => {
+          console.log('Google Maps script loaded, checking components...');
+          console.log('Places available:', !!(window.google && window.google.maps && window.google.maps.places));
+          initAutocomplete();
+        }, 100);
       };
+      
       script.onerror = () => {
         console.error('Failed to load Google Maps script');
       };
