@@ -12,6 +12,9 @@ export interface LocationAutocompleteProps
 declare global {
   interface Window {
     google: any;
+    initGoogleMaps: () => void;
+    googleMapsLoaded: boolean;
+    googleMapsCallbacks: (() => void)[];
   }
 }
 
@@ -122,22 +125,34 @@ export function LocationAutocomplete({
         return;
       }
 
-      console.log("Loading Google Maps script...");
-      // Create global callback function
-      window.initGoogleMaps = () => {
-        console.log("Google Maps callback fired");
-        initAutocomplete();
-      };
+      // Initialize global callback system if not already done
+      if (!window.googleMapsCallbacks) {
+        window.googleMapsCallbacks = [];
+        window.googleMapsLoaded = false;
+        
+        // Create global callback function that calls all registered callbacks
+        window.initGoogleMaps = () => {
+          console.log("Google Maps callback fired, executing", window.googleMapsCallbacks.length, "callbacks");
+          window.googleMapsLoaded = true;
+          window.googleMapsCallbacks.forEach(callback => callback());
+        };
+      }
 
-      const script = document.createElement("script");
-      // Use callback instead of loading=async
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
-      script.async = true;
-      script.defer = true;
-      script.onerror = () => {
-        console.error("Failed to load Google Maps script");
-      };
-      document.head.appendChild(script);
+      // Add this component's callback to the queue
+      window.googleMapsCallbacks.push(initAutocomplete);
+
+      // Only load the script if it hasn't been loaded yet
+      if (!window.googleMapsLoaded && !document.querySelector('script[src*="maps.googleapis.com"]')) {
+        console.log("Loading Google Maps script...");
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => {
+          console.error("Failed to load Google Maps script");
+        };
+        document.head.appendChild(script);
+      }
     };
 
     loadGoogleMaps();
