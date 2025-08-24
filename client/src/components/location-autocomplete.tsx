@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { MapPin } from "lucide-react";
 
 export interface LocationAutocompleteProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> {
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange"> {
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -15,12 +15,12 @@ declare global {
   }
 }
 
-export function LocationAutocomplete({ 
-  className, 
-  label, 
-  value, 
-  onChange, 
-  ...props 
+export function LocationAutocomplete({
+  className,
+  label,
+  value,
+  onChange,
+  ...props
 }: LocationAutocompleteProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,81 +28,114 @@ export function LocationAutocomplete({
 
   useEffect(() => {
     const initAutocomplete = () => {
-      console.log('Initializing autocomplete...');
-      if (window.google && window.google.maps && window.google.maps.places && inputRef.current) {
-        try {
-          console.log('Creating Places Autocomplete for input:', inputRef.current);
-          
-          const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
-            types: ['address'],
-            fields: ['formatted_address', 'geometry', 'place_id', 'name']
-          });
+      console.log("Initializing autocomplete...");
 
-          console.log('Autocomplete object created:', autocomplete);
+      // Wait for Places library to be fully loaded
+      const waitForPlaces = () => {
+        return new Promise<void>((resolve, reject) => {
+          let attempts = 0;
+          const maxAttempts = 50; // 5 seconds max
 
-          autocomplete.addListener('place_changed', () => {
-            console.log('Place changed event fired');
-            const place = autocomplete.getPlace();
-            console.log('Selected place data:', place);
-            
-            if (place && place.formatted_address) {
-              console.log('Setting address:', place.formatted_address);
-              onChange(place.formatted_address);
-            } else if (place && place.name) {
-              console.log('Using place name:', place.name);
-              onChange(place.name);
+          const checkInterval = setInterval(() => {
+            attempts++;
+
+            if (window.google?.maps?.places && inputRef.current) {
+              clearInterval(checkInterval);
+              console.log("Places library loaded after", attempts * 100, "ms");
+              resolve();
+            } else if (attempts >= maxAttempts) {
+              clearInterval(checkInterval);
+              reject(new Error("Google Places failed to load"));
             }
-          });
-
-          setIsLoaded(true);
-          console.log('Autocomplete setup complete');
-        } catch (error) {
-          console.error('Error setting up autocomplete:', error);
-        }
-      } else {
-        console.log('Google Maps components check:', {
-          google: !!window.google,
-          maps: !!(window.google && window.google.maps),
-          places: !!(window.google && window.google.maps && window.google.maps.places),
-          input: !!inputRef.current
+          }, 100);
         });
-      }
+      };
+
+      waitForPlaces()
+        .then(() => {
+          if (!inputRef.current) return;
+
+          try {
+            console.log(
+              "Creating Places Autocomplete for input:",
+              inputRef.current
+            );
+
+            const autocomplete = new window.google.maps.places.Autocomplete(
+              inputRef.current,
+              {
+                types: ["address"],
+                fields: ["formatted_address", "geometry", "place_id", "name"],
+              }
+            );
+
+            console.log("Autocomplete object created:", autocomplete);
+
+            autocomplete.addListener("place_changed", () => {
+              console.log("Place changed event fired");
+              const place = autocomplete.getPlace();
+              console.log("Selected place data:", place);
+
+              if (place && place.formatted_address) {
+                console.log("Setting address:", place.formatted_address);
+                onChange(place.formatted_address);
+              } else if (place && place.name) {
+                console.log("Using place name:", place.name);
+                onChange(place.name);
+              }
+            });
+
+            setIsLoaded(true);
+            console.log("Autocomplete setup complete");
+          } catch (error) {
+            console.error("Error setting up autocomplete:", error);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to load Google Places:", error);
+          console.log("Google Maps components check:", {
+            google: !!window.google,
+            maps: !!(window.google && window.google.maps),
+            places: !!(
+              window.google &&
+              window.google.maps &&
+              window.google.maps.places
+            ),
+            input: !!inputRef.current,
+          });
+        });
     };
 
     // Load Google Maps script with API key
     const loadGoogleMaps = () => {
       const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      console.log('API Key available:', !!apiKey);
-      
+      console.log("API Key available:", !!apiKey);
+
       if (!apiKey) {
-        console.error('Google Maps API key not found in environment variables');
+        console.error("Google Maps API key not found in environment variables");
         return;
       }
 
       if (window.google) {
-        console.log('Google Maps already loaded, initializing autocomplete');
+        console.log("Google Maps already loaded, initializing autocomplete");
         initAutocomplete();
         return;
       }
 
-      console.log('Loading Google Maps script...');
-      const script = document.createElement('script');
+      console.log("Loading Google Maps script...");
+      // Create global callback function
+      window.initGoogleMaps = () => {
+        console.log("Google Maps callback fired");
+        initAutocomplete();
+      };
+
+      const script = document.createElement("script");
+      // Use callback instead of loading=async
       script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;
       script.async = true;
       script.defer = true;
-      
-      // Set up global callback
-      (window as any).initGoogleMaps = () => {
-        console.log('Google Maps callback triggered');
-        setTimeout(() => {
-          console.log('Google Maps script loaded, checking components...');
-          console.log('Places available:', !!(window.google && window.google.maps && window.google.maps.places));
-          initAutocomplete();
-        }, 100);
-      };
-      
       script.onerror = () => {
-        console.error('Failed to load Google Maps script');
+        console.error("Failed to load Google Maps script");
       };
       document.head.appendChild(script);
     };
@@ -137,7 +170,10 @@ export function LocationAutocomplete({
       </label>
       <MapPin className="absolute right-4 top-3.5 text-gray-400" size={16} />
       {isLoaded && (
-        <div className="absolute right-12 top-3.5 w-2 h-2 bg-green-500 rounded-full" title="Autocomplete enabled" />
+        <div
+          className="absolute right-12 top-3.5 w-2 h-2 bg-green-500 rounded-full"
+          title="Autocomplete enabled"
+        />
       )}
     </div>
   );
