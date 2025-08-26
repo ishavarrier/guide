@@ -91,67 +91,91 @@ async function reverseGeocode(coordinates: Coordinates): Promise<string> {
   return data.results[0].formatted_address;
 }
 
-// Search for places near coordinates
+// Search for places near coordinates using Google Places Text Search API
 async function searchPlaces(coordinates: Coordinates, types: string[]): Promise<Place[]> {
-  // For now, return mock data since the API key is restricted for server-side calls
-  // In production, you would either:
-  // 1. Use a server-side API key without referer restrictions, or
-  // 2. Move this search to the frontend
-  
-  console.log("Searching for places near:", coordinates, "types:", types);
-  
-  // Return mock places data for demonstration
-  const mockPlaces: Place[] = [
-    {
-      place_id: "mock_1",
-      name: "Central Cafe",
-      address: "123 Main St, Midpoint City",
-      rating: 4.5,
-      distance: 0.2,
-      types: ["cafe", "restaurant"]
-    },
-    {
-      place_id: "mock_2", 
-      name: "Midpoint Park",
-      address: "456 Park Ave, Midpoint City",
-      rating: 4.2,
-      distance: 0.5,
-      types: ["park"]
-    },
-    {
-      place_id: "mock_3",
-      name: "Gas & Go Station", 
-      address: "789 Highway Rd, Midpoint City",
-      rating: 3.8,
-      distance: 0.8,
-      types: ["gas_station"]
-    },
-    {
-      place_id: "mock_4",
-      name: "Pizza Palace",
-      address: "321 Food St, Midpoint City", 
-      rating: 4.7,
-      distance: 0.3,
-      types: ["restaurant"]
-    },
-    {
-      place_id: "mock_5",
-      name: "Shopping Center",
-      address: "654 Mall Blvd, Midpoint City",
-      rating: 4.0,
-      distance: 1.2,
-      types: ["shopping_mall"]
-    }
-  ];
-
-  // Filter by selected types if any
-  if (types.length > 0) {
-    return mockPlaces.filter(place => 
-      place.types.some(type => types.includes(type))
-    );
+  if (!GOOGLE_MAPS_API_KEY) {
+    throw new Error("Google Maps API key is not configured");
   }
 
-  return mockPlaces;
+  console.log("Searching for places near:", coordinates, "types:", types);
+  
+  // Use Text Search API which works better with server-side calls
+  const radius = 5000; // 5km radius
+  const typeFilter = types.length > 0 ? types.join("|") : "restaurant|cafe|park|gas_station|shopping_mall|movie_theater";
+  
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${typeFilter}&location=${coordinates.lat},${coordinates.lng}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Places API response status:", data.status);
+
+    if (data.status === "REQUEST_DENIED") {
+      // Fallback to a broader search without type restrictions
+      console.log("Retrying with broader search...");
+      const fallbackResponse = await fetch(
+        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=restaurants+cafes+near+${coordinates.lat},${coordinates.lng}&key=${GOOGLE_MAPS_API_KEY}`
+      );
+      
+      if (fallbackResponse.ok) {
+        const fallbackData = await fallbackResponse.json();
+        if (fallbackData.status === "OK" && fallbackData.results) {
+          return processPacesResults(fallbackData.results, coordinates, types);
+        }
+      }
+      
+      throw new Error(`Places API error: ${data.status} - ${data.error_message || 'Unknown error'}`);
+    }
+
+    if (data.status !== "OK") {
+      throw new Error(`Places API error: ${data.status} - ${data.error_message || 'Unknown error'}`);
+    }
+
+    if (!data.results || data.results.length === 0) {
+      console.log("No places found, returning empty array");
+      return [];
+    }
+
+    return processPacesResults(data.results, coordinates, types);
+    
+  } catch (error) {
+    console.error("Error searching places:", error);
+    throw error;
+  }
+}
+
+// Helper function to process places results
+function processPacesResults(results: any[], coordinates: Coordinates, types: string[]): Place[] {
+  return results.map((place: any): Place => {
+    const placeCoords = {
+      lat: place.geometry.location.lat,
+      lng: place.geometry.location.lng
+    };
+    
+    return {
+      place_id: place.place_id,
+      name: place.name,
+      address: place.formatted_address || place.vicinity || "",
+      rating: place.rating || 0,
+      types: place.types || [],
+      distance: calculateDistance(coordinates, placeCoords),
+      coordinates: placeCoords
+    };
+  })
+  .filter(place => {
+    // Filter by selected types if any are specified
+    if (types.length > 0) {
+      return place.types.some(type => types.includes(type));
+    }
+    return true;
+  })
+  .sort((a: Place, b: Place) => a.distance - b.distance)
+  .slice(0, 20); // Limit to 20 results
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
