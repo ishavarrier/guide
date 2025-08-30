@@ -91,91 +91,43 @@ async function reverseGeocode(coordinates: Coordinates): Promise<string> {
   return data.results[0].formatted_address;
 }
 
-// Search for places near coordinates using Google Places Text Search API
+// Search for places near coordinates
 async function searchPlaces(coordinates: Coordinates, types: string[]): Promise<Place[]> {
   if (!GOOGLE_MAPS_API_KEY) {
     throw new Error("Google Maps API key is not configured");
   }
 
-  console.log("Searching for places near:", coordinates, "types:", types);
-  
-  // Use Text Search API which works better with server-side calls
-  const radius = 5000; // 5km radius
   const typeFilter = types.length > 0 ? types.join("|") : "restaurant|cafe|park|gas_station|shopping_mall|movie_theater";
   
-  try {
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${typeFilter}&location=${coordinates.lat},${coordinates.lng}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`
-    );
+  const response = await fetch(
+    `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=1000&type=${typeFilter}&key=${GOOGLE_MAPS_API_KEY}`
+  );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("Places API response status:", data.status);
-
-    if (data.status === "REQUEST_DENIED") {
-      // Fallback to a broader search without type restrictions
-      console.log("Retrying with broader search...");
-      const fallbackResponse = await fetch(
-        `https://maps.googleapis.com/maps/api/place/textsearch/json?query=restaurants+cafes+near+${coordinates.lat},${coordinates.lng}&key=${GOOGLE_MAPS_API_KEY}`
-      );
-      
-      if (fallbackResponse.ok) {
-        const fallbackData = await fallbackResponse.json();
-        if (fallbackData.status === "OK" && fallbackData.results) {
-          return processPacesResults(fallbackData.results, coordinates, types);
-        }
-      }
-      
-      throw new Error(`Places API error: ${data.status} - ${data.error_message || 'Unknown error'}`);
-    }
-
-    if (data.status !== "OK") {
-      throw new Error(`Places API error: ${data.status} - ${data.error_message || 'Unknown error'}`);
-    }
-
-    if (!data.results || data.results.length === 0) {
-      console.log("No places found, returning empty array");
-      return [];
-    }
-
-    return processPacesResults(data.results, coordinates, types);
-    
-  } catch (error) {
-    console.error("Error searching places:", error);
-    throw error;
+  if (!response.ok) {
+    throw new Error("Failed to search for places");
   }
-}
 
-// Helper function to process places results
-function processPacesResults(results: any[], coordinates: Coordinates, types: string[]): Place[] {
-  return results.map((place: any): Place => {
-    const placeCoords = {
+  const data = await response.json();
+
+  if (data.status !== "OK") {
+    throw new Error(`Places API error: ${data.status}`);
+  }
+
+  return data.results.map((place: any): Place => ({
+    place_id: place.place_id,
+    name: place.name,
+    address: place.vicinity || place.formatted_address || "",
+    rating: place.rating,
+    types: place.types || [],
+    distance: calculateDistance(coordinates, {
       lat: place.geometry.location.lat,
       lng: place.geometry.location.lng
-    };
-    
-    return {
-      place_id: place.place_id,
-      name: place.name,
-      address: place.formatted_address || place.vicinity || "",
-      rating: place.rating || 0,
-      types: place.types || [],
-      distance: calculateDistance(coordinates, placeCoords),
-      coordinates: placeCoords
-    };
-  })
-  .filter(place => {
-    // Filter by selected types if any are specified
-    if (types.length > 0) {
-      return place.types.some(type => types.includes(type));
+    }),
+    coordinates: {
+      lat: place.geometry.location.lat,
+      lng: place.geometry.location.lng
     }
-    return true;
-  })
-  .sort((a: Place, b: Place) => a.distance - b.distance)
-  .slice(0, 20); // Limit to 20 results
+  })).sort((a: Place, b: Place) => a.distance - b.distance);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {

@@ -24,7 +24,7 @@ export const placeSchema = z.object({
   rating: z.number().optional(),
   types: z.array(z.string()),
   distance: z.number(),
-  coordinates: coordinatesSchema.optional()
+  coordinates: coordinatesSchema
 });
 
 export const midpointResponseSchema = z.object({
