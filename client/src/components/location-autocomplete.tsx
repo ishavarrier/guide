@@ -67,7 +67,7 @@ export function LocationAutocomplete({
             const autocomplete = new window.google.maps.places.Autocomplete(
               inputRef.current,
               {
-                types: ["address"],
+                // Remove types restriction to allow all location types (cities, addresses, landmarks, etc.)
                 fields: ["formatted_address", "geometry", "place_id", "name"],
               }
             );
@@ -129,12 +129,16 @@ export function LocationAutocomplete({
       if (!window.googleMapsCallbacks) {
         window.googleMapsCallbacks = [];
         window.googleMapsLoaded = false;
-        
+
         // Create global callback function that calls all registered callbacks
         window.initGoogleMaps = () => {
-          console.log("Google Maps callback fired, executing", window.googleMapsCallbacks.length, "callbacks");
+          console.log(
+            "Google Maps callback fired, executing",
+            window.googleMapsCallbacks.length,
+            "callbacks"
+          );
           window.googleMapsLoaded = true;
-          window.googleMapsCallbacks.forEach(callback => callback());
+          window.googleMapsCallbacks.forEach((callback) => callback());
         };
       }
 
@@ -142,7 +146,10 @@ export function LocationAutocomplete({
       window.googleMapsCallbacks.push(initAutocomplete);
 
       // Only load the script if it hasn't been loaded yet
-      if (!window.googleMapsLoaded && !document.querySelector('script[src*="maps.googleapis.com"]')) {
+      if (
+        !window.googleMapsLoaded &&
+        !document.querySelector('script[src*="maps.googleapis.com"]')
+      ) {
         console.log("Loading Google Maps script...");
         const script = document.createElement("script");
         script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initGoogleMaps`;

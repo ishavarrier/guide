@@ -8,6 +8,10 @@ import { type LocationRequest, type MidpointResponse } from "@shared/schema";
 export default function Home() {
   const [searchData, setSearchData] = useState<LocationRequest | null>(null);
   const [results, setResults] = useState<MidpointResponse | null>(null);
+  const [inputLocations, setInputLocations] = useState<{
+    location1: { address: string; coordinates: { lat: number; lng: number } };
+    location2: { address: string; coordinates: { lat: number; lng: number } };
+  } | null>(null);
 
   const handleSearch = (data: LocationRequest) => {
     setSearchData(data);
@@ -17,10 +21,17 @@ export default function Home() {
     setResults(data);
   };
 
+  const handleInputLocations = (locations: {
+    location1: { address: string; coordinates: { lat: number; lng: number } };
+    location2: { address: string; coordinates: { lat: number; lng: number } };
+  }) => {
+    setInputLocations(locations);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
@@ -28,19 +39,25 @@ export default function Home() {
             Find the Perfect Meeting Spot
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Enter two locations and discover cafes, restaurants, parks, and more at the perfect midpoint between you and your friends.
+            Enter two locations and discover cafes, restaurants, parks, and more
+            at the perfect midpoint between you and your friends.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-1">
-            <LocationForm onSearch={handleSearch} onResults={handleResults} />
+            <LocationForm
+              onSearch={handleSearch}
+              onResults={handleResults}
+              onInputLocations={handleInputLocations}
+            />
           </div>
-          
+
           <div className="lg:col-span-2">
-            <ResultsSection 
-              searchData={searchData} 
+            <ResultsSection
+              searchData={searchData}
               results={results}
+              inputLocations={inputLocations}
             />
           </div>
         </div>

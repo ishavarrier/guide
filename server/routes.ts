@@ -1,12 +1,29 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { locationSchema, coordinatesRequestSchema, type LocationRequest, type CoordinatesRequest, type MidpointResponse, type Coordinates, type Place } from "@shared/schema";
+import {
+  locationSchema,
+  coordinatesRequestSchema,
+  type LocationRequest,
+  type CoordinatesRequest,
+  type MidpointResponse,
+  type Coordinates,
+  type Place,
+} from "@shared/schema";
 
-const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+const GOOGLE_MAPS_API_KEY =
+  process.env.GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+
+console.log("Environment variables check:");
+console.log("GOOGLE_MAPS_API_KEY:", process.env.GOOGLE_MAPS_API_KEY);
+console.log("VITE_GOOGLE_MAPS_API_KEY:", process.env.VITE_GOOGLE_MAPS_API_KEY);
+console.log("Final GOOGLE_MAPS_API_KEY:", GOOGLE_MAPS_API_KEY);
 
 // Calculate midpoint between two coordinates
-function calculateMidpoint(coord1: Coordinates, coord2: Coordinates): Coordinates {
+function calculateMidpoint(
+  coord1: Coordinates,
+  coord2: Coordinates
+): Coordinates {
   const lat1Rad = (coord1.lat * Math.PI) / 180;
   const lat2Rad = (coord2.lat * Math.PI) / 180;
   const lng1Rad = (coord1.lng * Math.PI) / 180;
@@ -25,7 +42,7 @@ function calculateMidpoint(coord1: Coordinates, coord2: Coordinates): Coordinate
 
   return {
     lat: (lat3 * 180) / Math.PI,
-    lng: (lng3 * 180) / Math.PI
+    lng: (lng3 * 180) / Math.PI,
   };
 }
 
@@ -51,7 +68,9 @@ async function geocodeAddress(address: string): Promise<Coordinates> {
   }
 
   const response = await fetch(
-    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`
+    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+      address
+    )}&key=${GOOGLE_MAPS_API_KEY}`
   );
 
   if (!response.ok) {
@@ -92,15 +111,21 @@ async function reverseGeocode(coordinates: Coordinates): Promise<string> {
 }
 
 // Search for places near coordinates
-async function searchPlaces(coordinates: Coordinates, types: string[]): Promise<Place[]> {
+async function searchPlaces(
+  coordinates: Coordinates,
+  types: string[]
+): Promise<Place[]> {
   if (!GOOGLE_MAPS_API_KEY) {
     throw new Error("Google Maps API key is not configured");
   }
 
-  const typeFilter = types.length > 0 ? types.join("|") : "restaurant|cafe|park|gas_station|shopping_mall|movie_theater";
-  
+  const typeFilter =
+    types.length > 0
+      ? types.join("|")
+      : "restaurant|cafe|park|gas_station|shopping_mall|movie_theater";
+
   const response = await fetch(
-    `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=1000&type=${typeFilter}&key=${GOOGLE_MAPS_API_KEY}`
+    `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${coordinates.lat},${coordinates.lng}&radius=5000&type=${typeFilter}&key=${GOOGLE_MAPS_API_KEY}`
   );
 
   if (!response.ok) {
@@ -113,34 +138,45 @@ async function searchPlaces(coordinates: Coordinates, types: string[]): Promise<
     throw new Error(`Places API error: ${data.status}`);
   }
 
-  return data.results.map((place: any): Place => ({
-    place_id: place.place_id,
-    name: place.name,
-    address: place.vicinity || place.formatted_address || "",
-    rating: place.rating,
-    types: place.types || [],
-    distance: calculateDistance(coordinates, {
-      lat: place.geometry.location.lat,
-      lng: place.geometry.location.lng
-    }),
-    coordinates: {
-      lat: place.geometry.location.lat,
-      lng: place.geometry.location.lng
-    }
-  })).sort((a: Place, b: Place) => a.distance - b.distance);
+  return data.results
+    .map(
+      (place: any): Place => ({
+        place_id: place.place_id,
+        name: place.name,
+        address: place.vicinity || place.formatted_address || "",
+        rating: place.rating,
+        types: place.types || [],
+        distance: calculateDistance(coordinates, {
+          lat: place.geometry.location.lat,
+          lng: place.geometry.location.lng,
+        }),
+        coordinates: {
+          lat: place.geometry.location.lat,
+          lng: place.geometry.location.lng,
+        },
+      })
+    )
+    .sort((a: Place, b: Place) => a.distance - b.distance);
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Find midpoint and places using coordinates (to avoid API key restrictions)
   app.post("/api/midpoint", async (req, res) => {
     try {
+      console.log("Received request body:", JSON.stringify(req.body, null, 2));
       const validatedData = coordinatesRequestSchema.parse(req.body);
-      
+      console.log("Validated data:", JSON.stringify(validatedData, null, 2));
+
       // Calculate midpoint from provided coordinates
-      const midpoint = calculateMidpoint(validatedData.coord1, validatedData.coord2);
+      const midpoint = calculateMidpoint(
+        validatedData.coord1,
+        validatedData.coord2
+      );
 
       // Get midpoint address (this may fail due to API restrictions, so we'll make it optional)
-      let midpointAddress = `${midpoint.lat.toFixed(4)}°, ${midpoint.lng.toFixed(4)}°`;
+      let midpointAddress = `${midpoint.lat.toFixed(
+        4
+      )}°, ${midpoint.lng.toFixed(4)}°`;
       try {
         midpointAddress = await reverseGeocode(midpoint);
       } catch (error) {
@@ -153,15 +189,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const response: MidpointResponse = {
         midpoint,
         midpointAddress,
-        places: places.slice(0, 20) // Limit to 20 results
+        places: places.slice(0, 20), // Limit to 20 results
       };
 
       res.json(response);
     } catch (error) {
       console.error("Error finding midpoint:", error);
-      res.status(400).json({ 
-        message: error instanceof Error ? error.message : "Failed to find midpoint and places" 
-      });
+      if (error instanceof Error && error.name === "ZodError") {
+        console.error("Validation error details:", error);
+        res.status(400).json({
+          message: "Invalid request data",
+          details: error.message,
+        });
+      } else {
+        res.status(400).json({
+          message:
+            error instanceof Error
+              ? error.message
+              : "Failed to find midpoint and places",
+        });
+      }
     }
   });
 

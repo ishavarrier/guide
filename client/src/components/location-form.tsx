@@ -2,13 +2,35 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Search, Coffee, Utensils, Trees, Fuel, ShoppingCart, Film } from "lucide-react";
-import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import {
+  Search,
+  Coffee,
+  Utensils,
+  Trees,
+  Fuel,
+  ShoppingCart,
+  Film,
+} from "lucide-react";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { LocationAutocomplete } from "@/components/location-autocomplete";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { locationSchema, type LocationRequest, type CoordinatesRequest, type MidpointResponse, PLACE_TYPES, type PlaceType, type Coordinates } from "@shared/schema";
+import {
+  locationSchema,
+  type LocationRequest,
+  type CoordinatesRequest,
+  type MidpointResponse,
+  PLACE_TYPES,
+  type PlaceType,
+  type Coordinates,
+} from "@shared/schema";
 
 const FILTER_ICONS = {
   cafe: Coffee,
@@ -16,15 +38,23 @@ const FILTER_ICONS = {
   park: Trees,
   gas_station: Fuel,
   shopping_mall: ShoppingCart,
-  movie_theater: Film
+  movie_theater: Film,
 } as const;
 
 interface LocationFormProps {
   onSearch: (data: LocationRequest) => void;
   onResults: (data: MidpointResponse) => void;
+  onInputLocations?: (locations: {
+    location1: { address: string; coordinates: { lat: number; lng: number } };
+    location2: { address: string; coordinates: { lat: number; lng: number } };
+  }) => void;
 }
 
-export default function LocationForm({ onSearch, onResults }: LocationFormProps) {
+export default function LocationForm({
+  onSearch,
+  onResults,
+  onInputLocations,
+}: LocationFormProps) {
   const [selectedFilters, setSelectedFilters] = useState<PlaceType[]>([]);
   const { toast } = useToast();
 
@@ -33,44 +63,69 @@ export default function LocationForm({ onSearch, onResults }: LocationFormProps)
     defaultValues: {
       location1: "",
       location2: "",
-      filters: []
-    }
+      filters: [],
+    },
   });
 
   const searchMutation = useMutation({
     mutationFn: async (data: LocationRequest) => {
       // Geocode addresses on frontend first
-      const geocodePromises = [data.location1, data.location2].map(async (address) => {
-        return new Promise<Coordinates>((resolve, reject) => {
-          if (!window.google || !window.google.maps || !window.google.maps.Geocoder) {
-            reject(new Error('Google Maps not loaded'));
-            return;
-          }
-          
-          const geocoder = new window.google.maps.Geocoder();
-          geocoder.geocode({ address }, (results: any, status: any) => {
-            if (status === 'OK' && results?.[0]?.geometry?.location) {
-              const location = results[0].geometry.location;
-              resolve({
-                lat: typeof location.lat === 'function' ? location.lat() : location.lat,
-                lng: typeof location.lng === 'function' ? location.lng() : location.lng
-              });
-            } else {
-              reject(new Error(`Could not find location: ${address}`));
+      const geocodePromises = [data.location1, data.location2].map(
+        async (address) => {
+          return new Promise<Coordinates>((resolve, reject) => {
+            if (
+              !window.google ||
+              !window.google.maps ||
+              !window.google.maps.Geocoder
+            ) {
+              reject(new Error("Google Maps not loaded"));
+              return;
             }
+
+            const geocoder = new window.google.maps.Geocoder();
+            geocoder.geocode({ address }, (results: any, status: any) => {
+              if (status === "OK" && results?.[0]?.geometry?.location) {
+                const location = results[0].geometry.location;
+                resolve({
+                  lat:
+                    typeof location.lat === "function"
+                      ? location.lat()
+                      : location.lat,
+                  lng:
+                    typeof location.lng === "function"
+                      ? location.lng()
+                      : location.lng,
+                });
+              } else {
+                reject(new Error(`Could not find location: ${address}`));
+              }
+            });
           });
-        });
-      });
+        }
+      );
 
       try {
         const [coord1, coord2] = await Promise.all(geocodePromises);
+
+        // Pass input locations to parent component
+        if (onInputLocations) {
+          onInputLocations({
+            location1: { address: data.location1, coordinates: coord1 },
+            location2: { address: data.location2, coordinates: coord2 },
+          });
+        }
+
         const coordinatesData: CoordinatesRequest = {
           coord1,
           coord2,
-          filters: data.filters
+          filters: data.filters,
         };
-        
-        const response = await apiRequest("POST", "/api/midpoint", coordinatesData);
+
+        const response = await apiRequest(
+          "POST",
+          "/api/midpoint",
+          coordinatesData
+        );
         return response.json() as Promise<MidpointResponse>;
       } catch (error) {
         throw error;
@@ -86,18 +141,19 @@ export default function LocationForm({ onSearch, onResults }: LocationFormProps)
     onError: (error) => {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to find midpoint",
+        description:
+          error instanceof Error ? error.message : "Failed to find midpoint",
         variant: "destructive",
       });
-    }
+    },
   });
 
   const toggleFilter = (filterType: PlaceType) => {
-    setSelectedFilters(prev => {
+    setSelectedFilters((prev) => {
       const newFilters = prev.includes(filterType)
-        ? prev.filter(f => f !== filterType)
+        ? prev.filter((f) => f !== filterType)
         : [...prev, filterType];
-      
+
       form.setValue("filters", newFilters);
       return newFilters;
     });
@@ -106,17 +162,19 @@ export default function LocationForm({ onSearch, onResults }: LocationFormProps)
   const onSubmit = (data: LocationRequest) => {
     const searchData = {
       ...data,
-      filters: selectedFilters
+      filters: selectedFilters,
     };
-    
+
     onSearch(searchData);
     searchMutation.mutate(searchData);
   };
 
   return (
     <div className="bg-surface rounded-xl shadow-lg p-6 sticky top-8">
-      <h3 className="text-xl font-semibold mb-6 text-secondary">Enter Locations</h3>
-      
+      <h3 className="text-xl font-semibold mb-6 text-secondary">
+        Enter Locations
+      </h3>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Location Inputs */}
@@ -138,7 +196,7 @@ export default function LocationForm({ onSearch, onResults }: LocationFormProps)
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="location2"
@@ -160,13 +218,15 @@ export default function LocationForm({ onSearch, onResults }: LocationFormProps)
 
           {/* Filter Categories */}
           <div>
-            <h4 className="text-sm font-semibold text-secondary mb-3">Filter by Type</h4>
+            <h4 className="text-sm font-semibold text-secondary mb-3">
+              Filter by Type
+            </h4>
             <div className="flex flex-wrap gap-2">
               {Object.entries(PLACE_TYPES).map(([key, { name }]) => {
                 const filterType = key as PlaceType;
                 const IconComponent = FILTER_ICONS[filterType];
                 const isSelected = selectedFilters.includes(filterType);
-                
+
                 return (
                   <Button
                     key={filterType}
