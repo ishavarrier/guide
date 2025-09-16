@@ -1,0 +1,443 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MidPoint Finder - Find Places Between Two Locations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#1976D2',
+                        secondary: '#424242',
+                        accent: '#FF5722',
+                        success: '#4CAF50',
+                        surface: '#FFFFFF',
+                        background: '#FAFAFA',
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="bg-background font-inter text-secondary min-h-screen">
+    
+    <!-- @COMPONENT: Header -->
+    <header class="bg-surface shadow-sm border-b border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fas fa-map-marker-alt text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-secondary">MidPoint Finder</h1>
+                </div>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="#" class="text-secondary hover:text-primary transition-colors">How it works</a>
+                    <a href="#" class="text-secondary hover:text-primary transition-colors">About</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- @COMPONENT: HeroSection -->
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold text-secondary mb-4">Find the Perfect Meeting Spot</h2>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Enter two locations and discover cafes, restaurants, parks, and more at the perfect midpoint between you and your friends.
+            </p>
+        </div>
+        <!-- @END_COMPONENT: HeroSection -->
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- @COMPONENT: LocationInputForm -->
+            <div class="lg:col-span-1">
+                <div class="bg-surface rounded-xl shadow-lg p-6 sticky top-8">
+                    <h3 class="text-xl font-semibold mb-6 text-secondary">Enter Locations</h3>
+                    
+                    <!-- Location Inputs -->
+                    <div class="space-y-6 mb-6">
+                        <div class="relative">
+                            <input type="text" 
+                                   id="location1" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all peer placeholder-transparent"
+                                   placeholder="First location"
+                                   data-bind="form.location1"
+                                   data-mock="true">
+                            <label for="location1" class="absolute left-4 -top-2.5 bg-white px-2 text-sm font-medium text-gray-600 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-primary peer-focus:text-sm transition-all">
+                                First Location
+                            </label>
+                            <i class="fas fa-map-marker-alt absolute right-4 top-3.5 text-gray-400"></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <input type="text" 
+                                   id="location2" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all peer placeholder-transparent"
+                                   placeholder="Second location"
+                                   data-bind="form.location2"
+                                   data-mock="true">
+                            <label for="location2" class="absolute left-4 -top-2.5 bg-white px-2 text-sm font-medium text-gray-600 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3 peer-focus:-top-2.5 peer-focus:text-primary peer-focus:text-sm transition-all">
+                                Second Location
+                            </label>
+                            <i class="fas fa-map-marker-alt absolute right-4 top-3.5 text-gray-400"></i>
+                        </div>
+                    </div>
+
+                    <!-- Filter Categories -->
+                    <div class="mb-6">
+                        <h4 class="text-sm font-semibold text-secondary mb-3">Filter by Type</h4>
+                        <!-- @MAP: filterTypes.map(type => ( -->
+                        <div class="flex flex-wrap gap-2">
+                            <button class="px-3 py-2 bg-primary text-white rounded-full text-sm font-medium transition-all hover:bg-blue-700"
+                                    data-event="click:toggleFilter"
+                                    data-mock="true">
+                                <i class="fas fa-coffee mr-1"></i>Cafes
+                            </button>
+                            <button class="px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium transition-all hover:bg-gray-200"
+                                    data-event="click:toggleFilter"
+                                    data-mock="true">
+                                <i class="fas fa-utensils mr-1"></i>Restaurants
+                            </button>
+                            <button class="px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium transition-all hover:bg-gray-200"
+                                    data-event="click:toggleFilter"
+                                    data-mock="true">
+                                <i class="fas fa-tree mr-1"></i>Parks
+                            </button>
+                            <button class="px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium transition-all hover:bg-gray-200"
+                                    data-event="click:toggleFilter"
+                                    data-mock="true">
+                                <i class="fas fa-gas-pump mr-1"></i>Gas Stations
+                            </button>
+                            <button class="px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium transition-all hover:bg-gray-200"
+                                    data-event="click:toggleFilter"
+                                    data-mock="true">
+                                <i class="fas fa-shopping-cart mr-1"></i>Shopping
+                            </button>
+                            <button class="px-3 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium transition-all hover:bg-gray-200"
+                                    data-event="click:toggleFilter"
+                                    data-mock="true">
+                                <i class="fas fa-film mr-1"></i>Entertainment
+                            </button>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+
+                    <!-- Search Button -->
+                    <button class="w-full bg-accent text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition-colors focus:ring-2 focus:ring-accent focus:ring-offset-2"
+                            data-event="click:handleSearch"
+                            data-implementation="Should validate locations and trigger API calls">
+                        <i class="fas fa-search mr-2"></i>
+                        Find Midpoint Places
+                    </button>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: LocationInputForm -->
+
+            <!-- @COMPONENT: ResultsSection -->
+            <div class="lg:col-span-2">
+                
+                <!-- @STATE: isLoading:boolean = false -->
+                <!-- @STATE: results:array = [] -->
+                <!-- @STATE: midpointCoordinates:object = null -->
+                
+                <!-- Midpoint Information -->
+                <div class="bg-surface rounded-xl shadow-lg p-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-semibold text-secondary">Midpoint Location</h3>
+                        <span class="bg-success text-white px-3 py-1 rounded-full text-sm font-medium">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Found
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <p class="text-sm font-medium text-gray-600">Coordinates</p>
+                            <p class="text-secondary" data-bind="midpoint.coordinates" data-mock="true">40.7829° N, 73.9654° W</p>
+                        </div>
+                        <div class="space-y-2">
+                            <p class="text-sm font-medium text-gray-600">Address</p>
+                            <p class="text-secondary" data-bind="midpoint.address" data-mock="true">Central Park, New York, NY</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Placeholder -->
+                <div class="bg-surface rounded-xl shadow-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-secondary mb-4">Map View</h3>
+                    <!-- @FUNCTIONALITY: This should integrate with Google Maps API to show actual map -->
+                    <div class="h-64 bg-gray-100 rounded-lg flex items-center justify-center" data-implementation="Integrate Google Maps API here">
+                        <div class="text-center">
+                            <i class="fas fa-map text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">Interactive map will be displayed here</p>
+                            <p class="text-sm text-gray-400">Showing midpoint and nearby places</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results List -->
+                <div class="bg-surface rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-secondary">Nearby Places</h3>
+                        <span class="text-sm text-gray-600" data-bind="results.length" data-mock="true">12 results found</span>
+                    </div>
+
+                    <!-- @MAP: results.map(place => ( -->
+                    <div class="space-y-4">
+                        <!-- Result Item 1 -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h4 class="text-lg font-semibold text-secondary" data-bind="place.name" data-mock="true">Blue Bottle Coffee</h4>
+                                        <span class="bg-primary text-white px-2 py-1 rounded text-xs font-medium">Cafe</span>
+                                    </div>
+                                    <p class="text-gray-600 mb-2" data-bind="place.address" data-mock="true">76 Ninth Ave, New York, NY 10011</p>
+                                    <div class="flex items-center space-x-4 text-sm">
+                                        <div class="flex items-center space-x-1">
+                                            <div class="flex text-yellow-400">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star-half-alt"></i>
+                                            </div>
+                                            <span class="text-gray-600" data-bind="place.rating" data-mock="true">4.5</span>
+                                        </div>
+                                        <span class="text-gray-500" data-bind="place.distance" data-mock="true">0.3 mi from midpoint</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <button class="text-primary hover:text-blue-700 transition-colors">
+                                        <i class="fas fa-directions text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Result Item 2 -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h4 class="text-lg font-semibold text-secondary" data-bind="place.name" data-mock="true">The High Line</h4>
+                                        <span class="bg-success text-white px-2 py-1 rounded text-xs font-medium">Park</span>
+                                    </div>
+                                    <p class="text-gray-600 mb-2" data-bind="place.address" data-mock="true">High Line, New York, NY 10011</p>
+                                    <div class="flex items-center space-x-4 text-sm">
+                                        <div class="flex items-center space-x-1">
+                                            <div class="flex text-yellow-400">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                            </div>
+                                            <span class="text-gray-600" data-bind="place.rating" data-mock="true">4.8</span>
+                                        </div>
+                                        <span class="text-gray-500" data-bind="place.distance" data-mock="true">0.1 mi from midpoint</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <button class="text-primary hover:text-blue-700 transition-colors">
+                                        <i class="fas fa-directions text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Result Item 3 -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h4 class="text-lg font-semibold text-secondary" data-bind="place.name" data-mock="true">Los Tacos No. 1</h4>
+                                        <span class="bg-accent text-white px-2 py-1 rounded text-xs font-medium">Restaurant</span>
+                                    </div>
+                                    <p class="text-gray-600 mb-2" data-bind="place.address" data-mock="true">75 9th Ave, New York, NY 10011</p>
+                                    <div class="flex items-center space-x-4 text-sm">
+                                        <div class="flex items-center space-x-1">
+                                            <div class="flex text-yellow-400">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                            </div>
+                                            <span class="text-gray-600" data-bind="place.rating" data-mock="true">4.2</span>
+                                        </div>
+                                        <span class="text-gray-500" data-bind="place.distance" data-mock="true">0.2 mi from midpoint</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <button class="text-primary hover:text-blue-700 transition-colors">
+                                        <i class="fas fa-directions text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Result Item 4 -->
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <h4 class="text-lg font-semibold text-secondary" data-bind="place.name" data-mock="true">Chelsea Market</h4>
+                                        <span class="bg-purple-500 text-white px-2 py-1 rounded text-xs font-medium">Shopping</span>
+                                    </div>
+                                    <p class="text-gray-600 mb-2" data-bind="place.address" data-mock="true">75 9th Ave, New York, NY 10011</p>
+                                    <div class="flex items-center space-x-4 text-sm">
+                                        <div class="flex items-center space-x-1">
+                                            <div class="flex text-yellow-400">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star-half-alt"></i>
+                                            </div>
+                                            <span class="text-gray-600" data-bind="place.rating" data-mock="true">4.6</span>
+                                        </div>
+                                        <span class="text-gray-500" data-bind="place.distance" data-mock="true">0.4 mi from midpoint</span>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <button class="text-primary hover:text-blue-700 transition-colors">
+                                        <i class="fas fa-directions text-lg"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_MAP )) -->
+
+                    <!-- Load More Button -->
+                    <div class="mt-6 text-center">
+                        <button class="px-6 py-2 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
+                                data-event="click:loadMoreResults"
+                                data-implementation="Should load next page of results">
+                            Load More Results
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: ResultsSection -->
+        </div>
+
+        <!-- @COMPONENT: ErrorHandling (hidden by default) -->
+        <div class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-bind="showError">
+            <div class="bg-white rounded-xl p-6 max-w-md mx-4">
+                <div class="flex items-center space-x-3 mb-4">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                    <h3 class="text-lg font-semibold text-secondary">Location Error</h3>
+                </div>
+                <p class="text-gray-600 mb-4" data-bind="error.message" data-mock="true">
+                    We couldn't find one or both of the locations you entered. Please check your spelling and try again.
+                </p>
+                <div class="flex space-x-3">
+                    <button class="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+                            data-event="click:closeError">
+                        Cancel
+                    </button>
+                    <button class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                            data-event="click:retrySearch">
+                        Try Again
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: ErrorHandling -->
+    </main>
+
+    <!-- @COMPONENT: Footer -->
+    <footer class="bg-surface border-t border-gray-200 mt-16">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <i class="fas fa-map-marker-alt text-white text-sm"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-secondary">MidPoint Finder</h3>
+                    </div>
+                    <p class="text-gray-600">Find the perfect meeting spot between any two locations.</p>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-secondary mb-3">Features</h4>
+                    <ul class="space-y-2 text-gray-600">
+                        <li>Location midpoint calculation</li>
+                        <li>Place type filtering</li>
+                        <li>Real-time search results</li>
+                        <li>Mobile-friendly design</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-sm font-semibold text-secondary mb-3">Support</h4>
+                    <ul class="space-y-2 text-gray-600">
+                        <li><a href="#" class="hover:text-primary transition-colors">How it works</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Privacy Policy</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Terms of Service</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 mt-8 pt-6 text-center text-gray-500">
+                <p>&copy; 2024 MidPoint Finder. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+    <!-- @END_COMPONENT: Footer -->
+
+    <script>
+        // TODO: Implement Google Maps API integration
+        // TODO: Implement location geocoding and validation
+        // TODO: Implement midpoint calculation algorithm
+        // TODO: Implement places search API calls
+        // TODO: Implement filter toggle functionality
+        // TODO: Implement error handling and user feedback
+        // TODO: Implement responsive map display
+        // TODO: Implement pagination for search results
+
+        (function() {
+            // Scoped JavaScript for demo interactions
+            const filterButtons = document.querySelectorAll('[data-event*="toggleFilter"]');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (this.classList.contains('bg-primary')) {
+                        this.classList.remove('bg-primary', 'text-white');
+                        this.classList.add('bg-gray-100', 'text-gray-700');
+                    } else {
+                        this.classList.remove('bg-gray-100', 'text-gray-700');
+                        this.classList.add('bg-primary', 'text-white');
+                    }
+                });
+            });
+
+            // Demo floating label functionality
+            const inputs = document.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                // Add some demo content for visual preview
+                if (input.id === 'location1') {
+                    input.value = 'Brooklyn, NY';
+                }
+                if (input.id === 'location2') {
+                    input.value = 'Manhattan, NY';
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
