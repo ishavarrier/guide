@@ -2,19 +2,19 @@ import { z } from "zod";
 
 export const coordinatesSchema = z.object({
   lat: z.number(),
-  lng: z.number()
+  lng: z.number(),
 });
 
 export const locationSchema = z.object({
   location1: z.string().min(1, "First location is required"),
   location2: z.string().min(1, "Second location is required"),
-  filters: z.array(z.string()).default([])
+  filters: z.array(z.string()).default([]),
 });
 
 export const coordinatesRequestSchema = z.object({
   coord1: coordinatesSchema,
   coord2: coordinatesSchema,
-  filters: z.array(z.string()).default([])
+  filters: z.array(z.string()).default([]),
 });
 
 export const placeSchema = z.object({
@@ -22,15 +22,27 @@ export const placeSchema = z.object({
   name: z.string(),
   address: z.string(),
   rating: z.number().optional(),
+  user_ratings_total: z.number().optional(),
+  price_level: z.number().optional(),
+  photos: z
+    .array(
+      z.object({
+        photo_reference: z.string(),
+        height: z.number(),
+        width: z.number(),
+        url: z.string(),
+      })
+    )
+    .optional(),
   types: z.array(z.string()),
   distance: z.number(),
-  coordinates: coordinatesSchema
+  coordinates: coordinatesSchema,
 });
 
 export const midpointResponseSchema = z.object({
   midpoint: coordinatesSchema,
   midpointAddress: z.string(),
-  places: z.array(placeSchema)
+  places: z.array(placeSchema),
 });
 
 export type LocationRequest = z.infer<typeof locationSchema>;
@@ -45,7 +57,7 @@ export const PLACE_TYPES = {
   park: { name: "Parks", icon: "tree" },
   gas_station: { name: "Gas Stations", icon: "gas-pump" },
   shopping_mall: { name: "Shopping", icon: "shopping-cart" },
-  movie_theater: { name: "Entertainment", icon: "film" }
+  movie_theater: { name: "Entertainment", icon: "film" },
 } as const;
 
 export type PlaceType = keyof typeof PLACE_TYPES;

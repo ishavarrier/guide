@@ -110,6 +110,14 @@ async function reverseGeocode(coordinates: Coordinates): Promise<string> {
   return data.results[0].formatted_address;
 }
 
+// Get photo URL from Google Places API
+function getPhotoUrl(photoReference: string, maxWidth: number = 400): string {
+  if (!GOOGLE_MAPS_API_KEY) {
+    return "";
+  }
+  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photo_reference=${photoReference}&key=${GOOGLE_MAPS_API_KEY}`;
+}
+
 // Search for places near coordinates
 async function searchPlaces(
   coordinates: Coordinates,
@@ -145,6 +153,15 @@ async function searchPlaces(
         name: place.name,
         address: place.vicinity || place.formatted_address || "",
         rating: place.rating,
+        user_ratings_total: place.user_ratings_total,
+        price_level: place.price_level,
+        photos:
+          place.photos?.map((photo: any) => ({
+            photo_reference: photo.photo_reference,
+            height: photo.height,
+            width: photo.width,
+            url: getPhotoUrl(photo.photo_reference, 400),
+          })) || [],
         types: place.types || [],
         distance: calculateDistance(coordinates, {
           lat: place.geometry.location.lat,
