@@ -6,10 +6,9 @@ import { type LocationRequest, type MidpointResponse } from "@shared/schema";
 interface ResultsSectionProps {
   searchData: LocationRequest | null;
   results: MidpointResponse | null;
-  inputLocations?: {
-    location1: { address: string; coordinates: { lat: number; lng: number } };
-    location2: { address: string; coordinates: { lat: number; lng: number } };
-  } | null;
+  inputLocations?:
+    | { address: string; coordinates: { lat: number; lng: number } }[]
+    | null;
 }
 
 export default function ResultsSection({
@@ -26,7 +25,7 @@ export default function ResultsSection({
             Ready to Find Your Midpoint
           </h3>
           <p className="text-gray-500">
-            Enter two locations and select your preferred place types to get
+            Enter locations and select your preferred place types to get
             started.
           </p>
         </div>

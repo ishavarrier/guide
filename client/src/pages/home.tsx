@@ -8,10 +8,9 @@ import { type LocationRequest, type MidpointResponse } from "@shared/schema";
 export default function Home() {
   const [searchData, setSearchData] = useState<LocationRequest | null>(null);
   const [results, setResults] = useState<MidpointResponse | null>(null);
-  const [inputLocations, setInputLocations] = useState<{
-    location1: { address: string; coordinates: { lat: number; lng: number } };
-    location2: { address: string; coordinates: { lat: number; lng: number } };
-  } | null>(null);
+  const [inputLocations, setInputLocations] = useState<
+    { address: string; coordinates: { lat: number; lng: number } }[] | null
+  >(null);
 
   const handleSearch = (data: LocationRequest) => {
     setSearchData(data);
@@ -21,10 +20,9 @@ export default function Home() {
     setResults(data);
   };
 
-  const handleInputLocations = (locations: {
-    location1: { address: string; coordinates: { lat: number; lng: number } };
-    location2: { address: string; coordinates: { lat: number; lng: number } };
-  }) => {
+  const handleInputLocations = (
+    locations: { address: string; coordinates: { lat: number; lng: number } }[]
+  ) => {
     setInputLocations(locations);
   };
 

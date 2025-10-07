@@ -19,30 +19,37 @@ console.log("GOOGLE_MAPS_API_KEY:", process.env.GOOGLE_MAPS_API_KEY);
 console.log("VITE_GOOGLE_MAPS_API_KEY:", process.env.VITE_GOOGLE_MAPS_API_KEY);
 console.log("Final GOOGLE_MAPS_API_KEY:", GOOGLE_MAPS_API_KEY);
 
-// Calculate midpoint between two coordinates
-function calculateMidpoint(
-  coord1: Coordinates,
-  coord2: Coordinates
-): Coordinates {
-  const lat1Rad = (coord1.lat * Math.PI) / 180;
-  const lat2Rad = (coord2.lat * Math.PI) / 180;
-  const lng1Rad = (coord1.lng * Math.PI) / 180;
-  const lng2Rad = (coord2.lng * Math.PI) / 180;
+// Calculate centroid between N coordinates (spherical mean approximation)
+function calculateCentroid(coords: Coordinates[]): Coordinates {
+  if (coords.length === 0) {
+    throw new Error("No coordinates provided");
+  }
 
-  const dLng = lng2Rad - lng1Rad;
+  let x = 0;
+  let y = 0;
+  let z = 0;
 
-  const bx = Math.cos(lat2Rad) * Math.cos(dLng);
-  const by = Math.cos(lat2Rad) * Math.sin(dLng);
+  coords.forEach(({ lat, lng }) => {
+    const latRad = (lat * Math.PI) / 180;
+    const lngRad = (lng * Math.PI) / 180;
 
-  const lat3 = Math.atan2(
-    Math.sin(lat1Rad) + Math.sin(lat2Rad),
-    Math.sqrt((Math.cos(lat1Rad) + bx) * (Math.cos(lat1Rad) + bx) + by * by)
-  );
-  const lng3 = lng1Rad + Math.atan2(by, Math.cos(lat1Rad) + bx);
+    x += Math.cos(latRad) * Math.cos(lngRad);
+    y += Math.cos(latRad) * Math.sin(lngRad);
+    z += Math.sin(latRad);
+  });
+
+  const total = coords.length;
+  x = x / total;
+  y = y / total;
+  z = z / total;
+
+  const lngRad = Math.atan2(y, x);
+  const hyp = Math.sqrt(x * x + y * y);
+  const latRad = Math.atan2(z, hyp);
 
   return {
-    lat: (lat3 * 180) / Math.PI,
-    lng: (lng3 * 180) / Math.PI,
+    lat: (latRad * 180) / Math.PI,
+    lng: (lngRad * 180) / Math.PI,
   };
 }
 
@@ -184,11 +191,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = coordinatesRequestSchema.parse(req.body);
       console.log("Validated data:", JSON.stringify(validatedData, null, 2));
 
-      // Calculate midpoint from provided coordinates
-      const midpoint = calculateMidpoint(
-        validatedData.coord1,
-        validatedData.coord2
-      );
+      // Calculate centroid from provided coordinates
+      const midpoint = calculateCentroid(validatedData.coords);
 
       // Get midpoint address (this may fail due to API restrictions, so we'll make it optional)
       let midpointAddress = `${midpoint.lat.toFixed(

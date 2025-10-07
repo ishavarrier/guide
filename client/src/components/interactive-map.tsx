@@ -6,9 +6,9 @@ interface InteractiveMapProps {
   midpointAddress: string;
   places: Place[];
   inputLocations?: {
-    location1: { address: string; coordinates: { lat: number; lng: number } };
-    location2: { address: string; coordinates: { lat: number; lng: number } };
-  };
+    address: string;
+    coordinates: { lat: number; lng: number };
+  }[];
 }
 
 declare global {
@@ -56,80 +56,55 @@ export default function InteractiveMap({
 
       // Create input location markers
       const inputMarkers: any[] = [];
-      if (inputLocations) {
-        // Location 1 marker
-        const location1Marker = new window.google.maps.Marker({
-          position: inputLocations.location1.coordinates,
-          map: mapInstance,
-          title: `Location 1: ${inputLocations.location1.address}`,
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: "#10B981",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 3,
-          },
-          zIndex: 800,
-        });
+      if (inputLocations && inputLocations.length > 0) {
+        inputLocations.forEach((loc, idx) => {
+          const colorPalette = [
+            "#10B981",
+            "#8B5CF6",
+            "#F59E0B",
+            "#3B82F6",
+            "#EF4444",
+            "#14B8A6",
+          ];
+          const color = colorPalette[idx % colorPalette.length];
 
-        const location1InfoWindow = new window.google.maps.InfoWindow({
-          content: `
-            <div class="p-2">
-              <h3 class="font-semibold text-lg text-green-600 mb-1">Location 1</h3>
-              <p class="text-sm text-gray-600">${
-                inputLocations.location1.address
-              }</p>
-              <p class="text-xs text-gray-500">
-                ${inputLocations.location1.coordinates.lat.toFixed(
-                  4
-                )}° N, ${inputLocations.location1.coordinates.lng.toFixed(4)}° W
-              </p>
-            </div>
-          `,
-        });
+          const marker = new window.google.maps.Marker({
+            position: loc.coordinates,
+            map: mapInstance,
+            title: `Location ${idx + 1}: ${loc.address}`,
+            icon: {
+              path: window.google.maps.SymbolPath.CIRCLE,
+              scale: 10,
+              fillColor: color,
+              fillOpacity: 1,
+              strokeColor: "#FFFFFF",
+              strokeWeight: 3,
+            },
+            zIndex: 800,
+          });
 
-        location1Marker.addListener("click", () => {
-          location1InfoWindow.open(mapInstance, location1Marker);
-        });
+          const infoWindow = new window.google.maps.InfoWindow({
+            content: `
+              <div class="p-2">
+                <h3 class="font-semibold text-lg mb-1" style="color:${color}">Location ${
+              idx + 1
+            }</h3>
+                <p class="text-sm text-gray-600">${loc.address}</p>
+                <p class="text-xs text-gray-500">
+                  ${loc.coordinates.lat.toFixed(
+                    4
+                  )}° N, ${loc.coordinates.lng.toFixed(4)}° W
+                </p>
+              </div>
+            `,
+          });
 
-        // Location 2 marker
-        const location2Marker = new window.google.maps.Marker({
-          position: inputLocations.location2.coordinates,
-          map: mapInstance,
-          title: `Location 2: ${inputLocations.location2.address}`,
-          icon: {
-            path: window.google.maps.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: "#8B5CF6",
-            fillOpacity: 1,
-            strokeColor: "#FFFFFF",
-            strokeWeight: 3,
-          },
-          zIndex: 800,
-        });
+          marker.addListener("click", () => {
+            infoWindow.open(mapInstance, marker);
+          });
 
-        const location2InfoWindow = new window.google.maps.InfoWindow({
-          content: `
-            <div class="p-2">
-              <h3 class="font-semibold text-lg text-purple-600 mb-1">Location 2</h3>
-              <p class="text-sm text-gray-600">${
-                inputLocations.location2.address
-              }</p>
-              <p class="text-xs text-gray-500">
-                ${inputLocations.location2.coordinates.lat.toFixed(
-                  4
-                )}° N, ${inputLocations.location2.coordinates.lng.toFixed(4)}° W
-              </p>
-            </div>
-          `,
+          inputMarkers.push(marker);
         });
-
-        location2Marker.addListener("click", () => {
-          location2InfoWindow.open(mapInstance, location2Marker);
-        });
-
-        inputMarkers.push(location1Marker, location2Marker);
       }
 
       // Create enhanced midpoint marker with pulsing animation
@@ -313,8 +288,8 @@ export default function InteractiveMap({
     if (!map || !window.google?.maps) return;
 
     // Clear existing place markers (keep input and midpoint markers)
-    // Input markers (0-1), Midpoint marker (2), Place markers (3+)
-    const inputMarkerCount = inputLocations ? 2 : 0;
+    // Input markers (0..N-1), Midpoint marker (N), Place markers (N+1..)
+    const inputMarkerCount = inputLocations ? inputLocations.length : 0;
     const midpointIndex = inputMarkerCount;
     markers
       .slice(inputMarkerCount + 1)

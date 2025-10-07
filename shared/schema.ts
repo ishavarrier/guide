@@ -6,14 +6,14 @@ export const coordinatesSchema = z.object({
 });
 
 export const locationSchema = z.object({
-  location1: z.string().min(1, "First location is required"),
-  location2: z.string().min(1, "Second location is required"),
+  locations: z
+    .array(z.string().min(1, "Location is required"))
+    .min(2, "Please enter at least two locations"),
   filters: z.array(z.string()).default([]),
 });
 
 export const coordinatesRequestSchema = z.object({
-  coord1: coordinatesSchema,
-  coord2: coordinatesSchema,
+  coords: z.array(coordinatesSchema).min(2),
   filters: z.array(z.string()).default([]),
 });
 

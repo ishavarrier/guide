@@ -44,10 +44,9 @@ const FILTER_ICONS = {
 interface LocationFormProps {
   onSearch: (data: LocationRequest) => void;
   onResults: (data: MidpointResponse) => void;
-  onInputLocations?: (locations: {
-    location1: { address: string; coordinates: { lat: number; lng: number } };
-    location2: { address: string; coordinates: { lat: number; lng: number } };
-  }) => void;
+  onInputLocations?: (
+    locations: { address: string; coordinates: { lat: number; lng: number } }[]
+  ) => void;
 }
 
 export default function LocationForm({
@@ -61,8 +60,7 @@ export default function LocationForm({
   const form = useForm<LocationRequest>({
     resolver: zodResolver(locationSchema),
     defaultValues: {
-      location1: "",
-      location2: "",
+      locations: ["", ""],
       filters: [],
     },
   });
@@ -70,54 +68,53 @@ export default function LocationForm({
   const searchMutation = useMutation({
     mutationFn: async (data: LocationRequest) => {
       // Geocode addresses on frontend first
-      const geocodePromises = [data.location1, data.location2].map(
-        async (address) => {
-          return new Promise<Coordinates>((resolve, reject) => {
-            if (
-              !window.google ||
-              !window.google.maps ||
-              !window.google.maps.Geocoder
-            ) {
-              reject(new Error("Google Maps not loaded"));
-              return;
-            }
+      const geocodePromises = data.locations.map(async (address) => {
+        return new Promise<Coordinates>((resolve, reject) => {
+          if (
+            !window.google ||
+            !window.google.maps ||
+            !window.google.maps.Geocoder
+          ) {
+            reject(new Error("Google Maps not loaded"));
+            return;
+          }
 
-            const geocoder = new window.google.maps.Geocoder();
-            geocoder.geocode({ address }, (results: any, status: any) => {
-              if (status === "OK" && results?.[0]?.geometry?.location) {
-                const location = results[0].geometry.location;
-                resolve({
-                  lat:
-                    typeof location.lat === "function"
-                      ? location.lat()
-                      : location.lat,
-                  lng:
-                    typeof location.lng === "function"
-                      ? location.lng()
-                      : location.lng,
-                });
-              } else {
-                reject(new Error(`Could not find location: ${address}`));
-              }
-            });
+          const geocoder = new window.google.maps.Geocoder();
+          geocoder.geocode({ address }, (results: any, status: any) => {
+            if (status === "OK" && results?.[0]?.geometry?.location) {
+              const location = results[0].geometry.location;
+              resolve({
+                lat:
+                  typeof location.lat === "function"
+                    ? location.lat()
+                    : location.lat,
+                lng:
+                  typeof location.lng === "function"
+                    ? location.lng()
+                    : location.lng,
+              });
+            } else {
+              reject(new Error(`Could not find location: ${address}`));
+            }
           });
-        }
-      );
+        });
+      });
 
       try {
-        const [coord1, coord2] = await Promise.all(geocodePromises);
+        const coords = await Promise.all(geocodePromises);
 
         // Pass input locations to parent component
         if (onInputLocations) {
-          onInputLocations({
-            location1: { address: data.location1, coordinates: coord1 },
-            location2: { address: data.location2, coordinates: coord2 },
-          });
+          onInputLocations(
+            data.locations.map((address, idx) => ({
+              address,
+              coordinates: coords[idx],
+            }))
+          );
         }
 
         const coordinatesData: CoordinatesRequest = {
-          coord1,
-          coord2,
+          coords,
           filters: data.filters,
         };
 
@@ -178,42 +175,56 @@ export default function LocationForm({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Location Inputs */}
-          <div className="space-y-6">
-            <FormField
-              control={form.control}
-              name="location1"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <LocationAutocomplete
-                      label="First Location"
-                      data-testid="input-location1"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="location2"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <LocationAutocomplete
-                      label="Second Location"
-                      data-testid="input-location2"
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="space-y-4">
+            {form.watch("locations").map((value, index) => (
+              <FormField
+                key={index}
+                control={form.control}
+                name={`locations.${index}` as unknown as any}
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <LocationAutocomplete
+                            label={`Location ${index + 1}`}
+                            data-testid={`input-location-${index}`}
+                            value={field.value}
+                            onChange={field.onChange}
+                          />
+                        </div>
+                        {form.watch("locations").length > 2 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              const current = form.getValues("locations");
+                              current.splice(index, 1);
+                              form.setValue("locations", [...current]);
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            ))}
+            <div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  const current = form.getValues("locations");
+                  form.setValue("locations", [...current, ""]);
+                }}
+              >
+                Add another location
+              </Button>
+            </div>
           </div>
 
           {/* Filter Categories */}
