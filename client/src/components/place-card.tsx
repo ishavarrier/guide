@@ -181,6 +181,36 @@ export default function PlaceCard({ place }: PlaceCardProps) {
           </span>
         </div>
 
+        {/* Travel Summaries from each input location */}
+        {place.travel_summaries && place.travel_summaries.length > 0 && (
+          <div className="mt-2">
+            <div className="text-xs text-gray-500 mb-1">
+              Travel from each location:
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+              {place.travel_summaries.map((s, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between text-xs bg-gray-50 rounded px-2 py-1"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Users size={12} className="text-gray-400" />
+                    <span>From L{(s.originIndex ?? idx) + 1}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-gray-700">
+                      {s.durationText ?? "-"}
+                    </span>
+                    <span className="text-gray-400 ml-1">
+                      ({s.distanceText ?? "-"})
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Place Types */}
         {place.types && place.types.length > 0 && (
           <div className="flex flex-wrap gap-1">

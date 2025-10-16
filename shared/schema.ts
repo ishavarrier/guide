@@ -37,12 +37,27 @@ export const placeSchema = z.object({
   types: z.array(z.string()),
   distance: z.number(),
   coordinates: coordinatesSchema,
+  travel_summaries: z
+    .array(
+      z.object({
+        originIndex: z.number(),
+        distanceMeters: z.number().nullable(),
+        durationSeconds: z.number().nullable(),
+        distanceText: z.string().nullable(),
+        durationText: z.string().nullable(),
+        mode: z
+          .enum(["driving", "walking", "bicycling", "transit"])
+          .default("driving"),
+      })
+    )
+    .optional(),
 });
 
 export const midpointResponseSchema = z.object({
   midpoint: coordinatesSchema,
   midpointAddress: z.string(),
   places: z.array(placeSchema),
+  radiusMeters: z.number().optional(),
 });
 
 export type LocationRequest = z.infer<typeof locationSchema>;

@@ -115,6 +115,7 @@ export default function ResultsSection({
           midpointAddress={results.midpointAddress}
           places={results.places}
           inputLocations={inputLocations}
+          radiusMeters={results.radiusMeters}
         />
       </div>
 

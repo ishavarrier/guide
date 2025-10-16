@@ -9,6 +9,7 @@ interface InteractiveMapProps {
     address: string;
     coordinates: { lat: number; lng: number };
   }[];
+  radiusMeters?: number;
 }
 
 declare global {
@@ -25,6 +26,7 @@ export default function InteractiveMap({
   midpointAddress,
   places,
   inputLocations,
+  radiusMeters,
 }: InteractiveMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -57,15 +59,19 @@ export default function InteractiveMap({
       // Create input location markers
       const inputMarkers: any[] = [];
       if (inputLocations && inputLocations.length > 0) {
+        const colorPalette = [
+          "#10B981",
+          "#8B5CF6",
+          "#F59E0B",
+          "#3B82F6",
+          "#EF4444",
+          "#14B8A6",
+          "#DB2777",
+          "#0EA5E9",
+          "#84CC16",
+          "#F97316",
+        ];
         inputLocations.forEach((loc, idx) => {
-          const colorPalette = [
-            "#10B981",
-            "#8B5CF6",
-            "#F59E0B",
-            "#3B82F6",
-            "#EF4444",
-            "#14B8A6",
-          ];
           const color = colorPalette[idx % colorPalette.length];
 
           const marker = new window.google.maps.Marker({
@@ -155,7 +161,7 @@ export default function InteractiveMap({
         fillOpacity: 0.1,
         map: mapInstance,
         center: midpoint,
-        radius: 5000, // 5km radius in meters
+        radius: radiusMeters ?? 5000,
         clickable: false,
       });
 
@@ -281,7 +287,7 @@ export default function InteractiveMap({
         radiusCircle.setMap(null);
       }
     };
-  }, [midpoint, midpointAddress, places]);
+  }, [midpoint, midpointAddress, places, inputLocations, radiusMeters]);
 
   // Update map when places change
   useEffect(() => {
@@ -352,7 +358,7 @@ export default function InteractiveMap({
       ...prev.slice(0, inputMarkerCount + 1),
       ...placeMarkers,
     ]);
-  }, [places, map]);
+  }, [places, map, inputLocations]);
 
   return (
     <div className="relative">
@@ -364,17 +370,33 @@ export default function InteractiveMap({
       {isLoaded && (
         <div className="absolute top-2 right-2 bg-white rounded-lg shadow-lg p-3 text-xs">
           <div className="space-y-2">
-            {inputLocations && (
-              <>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                  <span>Location 1</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full mr-2"></div>
-                  <span>Location 2</span>
-                </div>
-              </>
+            {inputLocations && inputLocations.length > 0 && (
+              <div className="space-y-1">
+                {inputLocations.map((_, idx) => {
+                  const colorPalette = [
+                    "#10B981",
+                    "#8B5CF6",
+                    "#F59E0B",
+                    "#3B82F6",
+                    "#EF4444",
+                    "#14B8A6",
+                    "#DB2777",
+                    "#0EA5E9",
+                    "#84CC16",
+                    "#F97316",
+                  ];
+                  const color = colorPalette[idx % colorPalette.length];
+                  return (
+                    <div key={idx} className="flex items-center">
+                      <div
+                        className="w-3 h-3 rounded-full mr-2"
+                        style={{ backgroundColor: color }}
+                      ></div>
+                      <span>Location {idx + 1}</span>
+                    </div>
+                  );
+                })}
+              </div>
             )}
             <div className="flex items-center">
               <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
@@ -386,7 +408,9 @@ export default function InteractiveMap({
             </div>
             <div className="flex items-center">
               <div className="w-3 h-3 border-2 border-blue-500 border-dashed rounded-full mr-2"></div>
-              <span>Search Radius (5km)</span>
+              <span>
+                Search Radius {((radiusMeters ?? 5000) / 1000).toFixed(1)} km
+              </span>
             </div>
           </div>
         </div>
