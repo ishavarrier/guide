@@ -79,12 +79,12 @@ export default function InteractiveMap({
             map: mapInstance,
             title: `Location ${idx + 1}: ${loc.address}`,
             icon: {
-              path: window.google.maps.SymbolPath.CIRCLE,
-              scale: 10,
+              path: window.google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+              scale: 6,
               fillColor: color,
               fillOpacity: 1,
-              strokeColor: "#FFFFFF",
-              strokeWeight: 3,
+              strokeColor: "#1F2937",
+              strokeWeight: 2,
             },
             zIndex: 800,
           });
