@@ -17,7 +17,7 @@ services:
   - type: web
     name: midpoint-frontend
     env: node
-    buildCommand: cd midpoint-native && npm install && npm run build:web
+    buildCommand: cd midpoint-native && (rm -rf node_modules package-lock.json || true) && npm install --legacy-peer-deps && npm run build:web
     startCommand: cd midpoint-native && npm run serve
     envVars:
       - key: PORT

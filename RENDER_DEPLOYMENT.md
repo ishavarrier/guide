@@ -53,14 +53,27 @@ The `render.yaml` file has been configured to:
 
 ## Build Process
 
-1. **Install Dependencies**: `npm install` installs all required packages including `serve`
-2. **Build Static Files**: `npm run build:web` runs `expo export:web` which:
+1. **Clean Install**: The build command removes any existing `node_modules` and `package-lock.json` to avoid npm optional dependency issues
+2. **Install Dependencies**: `npm install --legacy-peer-deps` installs all required packages with legacy peer dependency resolution
+3. **Build Static Files**: `npm run build:web` runs `expo export:web` which:
    - Compiles the React Native code for web
    - Generates static HTML, CSS, and JavaScript files
    - Outputs everything to the `dist` directory
-3. **Serve Static Files**: `npm run serve` starts a static file server on port 3000
+4. **Serve Static Files**: `npm run serve` starts a static file server on port 3000
 
 ## Troubleshooting
+
+### Issue: Cannot find module @rollup/rollup-linux-x64-gnu
+
+**Solution**: This is a known npm bug with optional dependencies. The build command already handles this by:
+
+1. Removing `node_modules` and `package-lock.json` before installing
+2. Using `--legacy-peer-deps` flag during installation
+
+If you still encounter this error, you can try:
+
+- Updating npm: `npm install -g npm@latest`
+- Using yarn instead: Update build command to use `yarn install` instead of `npm install`
 
 ### Issue: Build fails with "expo export:web" not found
 
