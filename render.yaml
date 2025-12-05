@@ -1,0 +1,31 @@
+services:
+  # Backend Service (Java Spring Boot)
+  - type: web
+    name: midpoint-backend
+    env: java
+    buildCommand: cd backend && mvn clean package -DskipTests
+    startCommand: cd backend && java -jar target/midpoint-backend-1.0.0.jar
+    envVars:
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: PORT
+        value: 8080
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+
+  # Frontend Service (React Native Expo Web App)
+  - type: web
+    name: midpoint-frontend
+    env: node
+    buildCommand: cd midpoint-native && npm install && npm run build:web
+    startCommand: cd midpoint-native && npm run serve
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: EXPO_PUBLIC_API_BASE_URL
+        fromService:
+          type: web
+          name: midpoint-backend
+          property: host
+      - key: NODE_ENV
+        value: production
