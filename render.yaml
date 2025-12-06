@@ -2,6 +2,7 @@ services:
   # Backend Service (Java Spring Boot - Docker)
   - type: web
     name: midpoint-backend
+    env: docker
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     envVars:
