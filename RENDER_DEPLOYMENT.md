@@ -1,10 +1,10 @@
 # Render Deployment Guide for React Native App
 
-This guide explains how to deploy the React Native Expo app (from `midpoint-native` folder) to Render.
+This guide explains how to deploy the React Native Expo app to Render.
 
 ## Overview
 
-The deployment uses the React Native code in the `midpoint-native` folder, which is built for web using Expo's static export feature.
+The deployment uses the React Native code in the root directory, which is built for web using Expo's static export feature.
 
 ## Configuration
 
@@ -12,20 +12,16 @@ The deployment uses the React Native code in the `midpoint-native` folder, which
 
 The `render.yaml` file has been configured to:
 
-1. **Backend Service**: Deploy the Java Spring Boot backend from the `backend` folder
-2. **Frontend Service**: Deploy the React Native Expo web app from the `midpoint-native` folder
+1. **Backend Service**: Deploy the Java Spring Boot backend from the `backend` folder (using Docker)
+2. **Frontend Service**: Deploy the React Native Expo web app from the root directory
 
 ### Frontend Service Details
 
-- **Build Command**: `cd midpoint-native && npm install && npm run build:web`
-  - Changes to the `midpoint-native` directory
+- **Build Command**: `npm install --legacy-peer-deps && npm run build:web`
   - Installs dependencies
-  - Runs `expo export:web` which generates static files in the `dist` directory
-- **Start Command**: `cd midpoint-native && npm run serve`
-  - Changes to the `midpoint-native` directory
+  - Runs `expo export --platform web` which generates static files in the `dist` directory
+- **Start Command**: `npm run serve`
   - Serves the static files from `dist` using the `serve` package
-
-**Important**: The build and start commands use `cd midpoint-native` to ensure Render builds from the correct folder. You may also want to set the **Root Directory** to `midpoint-native` in the Render dashboard (Settings → Build & Deploy → Root Directory) as an additional safeguard.
 
 ## Environment Variables
 

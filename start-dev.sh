@@ -58,7 +58,7 @@ fi
 
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-FRONTEND_DIR="$SCRIPT_DIR/midpoint-native"
+FRONTEND_DIR="$SCRIPT_DIR"
 BACKEND_DIR="$SCRIPT_DIR/backend"
 
 # Check if .env file exists for API keys
@@ -140,7 +140,7 @@ if [ -n "$FRONTEND_API_KEY" ]; then
 fi
 echo ""
 
-# Navigate to frontend directory
+# Navigate to frontend directory (root, where React Native code now lives)
 echo "📱 Starting Expo..."
 cd "$FRONTEND_DIR"
 
