@@ -2,7 +2,6 @@ services:
   # Backend Service (Java Spring Boot)
   - type: web
     name: midpoint-backend
-    env: java
     buildCommand: cd backend && mvn clean package -DskipTests
     startCommand: cd backend && java -jar target/midpoint-backend-1.0.0.jar
     envVars:
