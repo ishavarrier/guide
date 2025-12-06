@@ -1,9 +1,9 @@
 services:
-  # Backend Service (Java Spring Boot)
+  # Backend Service (Java Spring Boot - Docker)
   - type: web
     name: midpoint-backend
-    buildCommand: cd backend && mvn clean package -DskipTests
-    startCommand: cd backend && java -jar target/midpoint-backend-1.0.0.jar
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     envVars:
       - key: GOOGLE_MAPS_API_KEY
         sync: false
