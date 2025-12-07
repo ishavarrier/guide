@@ -193,12 +193,26 @@ export default function LocationsPage() {
         const data = await response.json();
         console.log("✅ Midpoint data received:", data);
 
+        // Prepare input locations data for the map
+        const inputLocations = locations
+          .filter((loc) => coordinates[loc.id])
+          .map((loc) => ({
+            name: loc.location,
+            coordinates: {
+              lat: coordinates[loc.id].lat,
+              lng: coordinates[loc.id].lng,
+            },
+          }));
+
         // Navigate to map page with the data
         router.push({
           pathname: "/map",
           params: {
             activity: activity,
-            midpointData: JSON.stringify(data),
+            midpointData: JSON.stringify({
+              ...data,
+              inputLocations: inputLocations,
+            }),
             selectedFriends: JSON.stringify(selectedFriends),
           },
         });

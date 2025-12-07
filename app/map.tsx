@@ -94,20 +94,42 @@ export default function MidpointMapPage() {
     }
 
     // Prepare markers data
-    const markers: Array<{
+    const placeMarkers: Array<{
       lat: number;
       lng: number;
       title: string;
       icon: string;
     }> = [];
+
+    // Add markers for found places (restaurants, cafes, etc.)
     if (midpointData?.places) {
       midpointData.places.forEach((place: any, index: number) => {
         if (place.coordinates?.lat && place.coordinates?.lng) {
-          markers.push({
+          placeMarkers.push({
             lat: place.coordinates.lat,
             lng: place.coordinates.lng,
             title: place.name || `Place ${index + 1}`,
             icon: "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+          });
+        }
+      });
+    }
+
+    // Add star markers for input locations
+    const inputLocationMarkers: Array<{
+      lat: number;
+      lng: number;
+      title: string;
+      icon: string;
+    }> = [];
+    if (midpointData?.inputLocations) {
+      midpointData.inputLocations.forEach((location: any) => {
+        if (location.coordinates?.lat && location.coordinates?.lng) {
+          inputLocationMarkers.push({
+            lat: location.coordinates.lat,
+            lng: location.coordinates.lng,
+            title: location.name || "Input Location",
+            icon: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png",
           });
         }
       });
@@ -170,9 +192,33 @@ export default function MidpointMapPage() {
                 }
               });
 
-              // Add place markers
-              const markers = ${JSON.stringify(markers)};
-              markers.forEach(marker => {
+              // Add star markers for input locations
+              const inputLocationMarkers = ${JSON.stringify(
+                inputLocationMarkers
+              )};
+              inputLocationMarkers.forEach(marker => {
+                // Create a custom star icon using SVG
+                const starIcon = {
+                  path: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+                  fillColor: '#FFD700',
+                  fillOpacity: 1,
+                  strokeColor: '#FFA500',
+                  strokeWeight: 2,
+                  scale: 1.2,
+                  anchor: new google.maps.Point(12, 12)
+                };
+                
+                new google.maps.Marker({
+                  position: { lat: marker.lat, lng: marker.lng },
+                  map: map,
+                  title: marker.title,
+                  icon: starIcon
+                });
+              });
+
+              // Add place markers (restaurants, cafes, etc.)
+              const placeMarkers = ${JSON.stringify(placeMarkers)};
+              placeMarkers.forEach(marker => {
                 new google.maps.Marker({
                   position: { lat: marker.lat, lng: marker.lng },
                   map: map,
@@ -182,10 +228,11 @@ export default function MidpointMapPage() {
               });
 
               // Fit bounds to show all markers
-              if (markers.length > 0) {
+              const allMarkers = [...inputLocationMarkers, ...placeMarkers];
+              if (allMarkers.length > 0) {
                 const bounds = new google.maps.LatLngBounds();
                 bounds.extend(center);
-                markers.forEach(m => bounds.extend({ lat: m.lat, lng: m.lng }));
+                allMarkers.forEach(m => bounds.extend({ lat: m.lat, lng: m.lng }));
                 map.fitBounds(bounds);
               }
             }
