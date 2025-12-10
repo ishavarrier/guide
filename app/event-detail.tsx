@@ -1,42 +1,57 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions, Alert, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Calendar, MapPin, Clock, Share2 } from 'lucide-react-native';
-import { colors, colorOpacity } from '../constants/theme';
-import { successHaptic } from '../utils/haptics';
-import { EventsService } from '../lib/events';
-import { supabase } from '../lib/supabase';
-import { FriendsService } from '../lib/friends';
-import { AuthService } from '../lib/auth';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  StyleSheet,
+  Dimensions,
+  Alert,
+  TextInput,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { router, useLocalSearchParams } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  ArrowLeft,
+  Calendar,
+  MapPin,
+  Clock,
+  Share2,
+} from "lucide-react-native";
+import { colors, colorOpacity } from "../constants/theme";
+import { successHaptic } from "../utils/haptics";
+import { EventsService } from "../lib/events";
+import { supabase } from "../lib/supabase";
+import { FriendsService } from "../lib/friends";
+import { AuthService } from "../lib/auth";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HEADER_HEIGHT = SCREEN_HEIGHT * 0.25;
 
 export default function EventDetailPage() {
   const params = useLocalSearchParams();
   const [isSaving, setIsSaving] = useState(false);
   const [eventSaved, setEventSaved] = useState(false);
-  const [eventDate, setEventDate] = useState('');
-  const [eventTime, setEventTime] = useState('');
-  
+  const [eventDate, setEventDate] = useState("");
+  const [eventTime, setEventTime] = useState("");
+
   // Determine if this is a new event from restaurant selection
-  const isNewEvent = params.isNewEvent === 'true';
-  
+  const isNewEvent = params.isNewEvent === "true";
+
   // Get restaurant data from params if available
   const restaurantName = params.restaurantName as string | undefined;
   const restaurantAddress = params.restaurantAddress as string | undefined;
-  
+
   // Parse selected friends
   const selectedFriends = params.selectedFriends
     ? JSON.parse(params.selectedFriends as string)
     : [];
-  
+
   // Build event details from params
   const eventDetails = {
-    title: restaurantName || 'Event',
-    location: restaurantAddress || 'Location TBD',
+    title: restaurantName || "Event",
+    location: restaurantAddress || "Location TBD",
   };
 
   // Get current user ID
@@ -56,12 +71,15 @@ export default function EventDetailPage() {
     }
 
     // If no user found, throw an error instead of using a random user
-    throw new Error('User not logged in. Please log in to continue.');
+    throw new Error("User not logged in. Please log in to continue.");
   };
 
   const handleShareWithFriends = async () => {
     if (eventSaved) {
-      Alert.alert("Event Already Saved", "This event has already been shared with your friends.");
+      Alert.alert(
+        "Event Already Saved",
+        "This event has already been shared with your friends."
+      );
       return;
     }
 
@@ -72,7 +90,7 @@ export default function EventDetailPage() {
 
     try {
       const currentUserId = await getCurrentUserId();
-      
+
       // Handle selectedFriends - could be array of IDs or array of objects with id property
       const friendIds = Array.isArray(selectedFriends)
         ? selectedFriends.map((friend: any) => {
@@ -162,9 +180,7 @@ export default function EventDetailPage() {
             </View>
             <View style={styles.headerTextContainer}>
               <Text style={styles.headerTitle}>{eventDetails.title}</Text>
-              <Text style={styles.headerSubtitle}>
-                Set date and time
-              </Text>
+              <Text style={styles.headerSubtitle}>Set date and time</Text>
             </View>
           </View>
         </LinearGradient>
@@ -178,7 +194,7 @@ export default function EventDetailPage() {
           {/* Event Details Card */}
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Event Details</Text>
-            
+
             {/* Location */}
             <View style={styles.detailItem}>
               <View style={styles.detailIconContainer}>
@@ -271,45 +287,45 @@ const styles = StyleSheet.create({
     height: HEADER_HEIGHT,
     minHeight: 180,
     maxHeight: 220,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   backButton: {
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'flex-start',
+    justifyContent: "center",
+    alignItems: "flex-start",
     marginBottom: 12,
   },
   headerContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     gap: 12,
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   iconContainer: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colorOpacity.white['20'],
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: colorOpacity.white["20"],
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTextContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: colors.white,
     marginBottom: 4,
     letterSpacing: -0.5,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: colorOpacity.white['80'],
-    fontWeight: '400',
+    color: colorOpacity.white["80"],
+    fontWeight: "400",
   },
   bodySection: {
     flex: 1,
@@ -330,21 +346,21 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.primary,
     marginBottom: 16,
   },
   detailItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: 16,
     gap: 12,
   },
   detailIconContainer: {
     width: 24,
     height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 2,
   },
   detailContent: {
@@ -357,12 +373,12 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.foreground,
   },
   input: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.foreground,
     backgroundColor: colors.inputBackground || colors.background,
     borderWidth: 1,
@@ -377,13 +393,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   shareButton: {
-    width: '100%',
+    width: "100%",
     height: 56,
     backgroundColor: colors.primary,
     borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     paddingHorizontal: 20,
     shadowColor: colors.black,
@@ -397,7 +413,7 @@ const styles = StyleSheet.create({
   },
   shareButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.white,
   },
   shareButtonContainer: {
@@ -405,13 +421,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   shareButton: {
-    width: '100%',
+    width: "100%",
     height: 56,
     backgroundColor: colors.primary,
     borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     paddingHorizontal: 20,
     shadowColor: colors.black,
@@ -425,7 +441,7 @@ const styles = StyleSheet.create({
   },
   shareButtonText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.white,
   },
 });
